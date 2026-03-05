@@ -23,12 +23,22 @@ Provide a clear and structured view of:
 
 ##  High-level Architecture
 - **Frontend**: Web dashboard (React)
-- **Backend**: REST API (Node.js)
+- **Backend**: REST API (Node.js) - **Hexagonal Architecture (Ports & Adapters)**
 - **Data sources**:
   - Public crypto price APIs
   - News or headlines feeds
 - **Analysis**:
   - Basic sentiment classification (NLP)
+
+### Backend Architecture
+The backend follows **Hexagonal Architecture** principles:
+- **Domain Layer**: Pure business logic (entities, value objects, services)
+- **Application Layer**: Use cases that orchestrate business operations
+- **Ports**: Interfaces defining contracts for external dependencies
+- **Adapters**: Implementations (HTTP controllers, external API clients)
+- **Infrastructure**: Configuration, dependency injection, middleware
+
+See [backend/README.md](backend/README.md) for detailed architecture documentation.
 
 ---
 
