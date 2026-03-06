@@ -4,6 +4,7 @@
  */
 
 const express = require('express');
+const cors = require('cors');
 const { apiReference } = require('@scalar/express-api-reference');
 const path = require('path');
 const fs = require('fs');
@@ -14,6 +15,12 @@ const indexRoutes = require('./adapters/http/routes/index');
 const cryptoRoutes = require('./adapters/http/routes/crypto');
 
 const app = express();
+
+// CORS configuration
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true
+}));
 
 // Middleware for parsing JSON bodies
 app.use(express.json());
