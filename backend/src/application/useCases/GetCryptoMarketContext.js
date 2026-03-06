@@ -54,10 +54,25 @@ class GetCryptoMarketContext {
       // 2. Get news data
       const newsItems = await this.newsProvider.getLatest(assetId, newsLimit);
 
-      // 3. Analyze sentiment
+      // 3. Analyze sentiment (overall)
       const sentimentResult = await this.sentimentAnalyzer.analyze(newsItems);
 
-      // 4. Create domain entity
+      // 4. Analyze sentiment for each news item
+      const headlinesWithSentiment = await Promise.all(
+        newsItems.map(async (item) => {
+          const itemSentiment = await this.sentimentAnalyzer.analyzeItem(item);
+          return {
+            id: item.id || `${assetId}-${newsItems.indexOf(item) + 1}`,
+            title: item.title,
+            source: item.source,
+            publishedAt: item.publishedAt,
+            url: item.url,
+            sentiment: itemSentiment.sentiment.toString()
+          };
+        })
+      );
+
+      // 5. Create domain entity
       const asset = new CryptoAsset({
         id: priceData.id,
         symbol: priceData.symbol,
@@ -66,21 +81,24 @@ class GetCryptoMarketContext {
         change24h: priceData.change24h
       });
 
-      // 5. Return complete context
+      // 6. Return complete context
+      const timestamp = new Date().toISOString();
+      
       return {
-        asset: asset.toJSON(),
+        asset: {
+          ...asset.toJSON(),
+          updatedAt: timestamp
+        },
         sentiment: {
           value: sentimentResult.sentiment.toString(),
           score: sentimentResult.score,
           confidence: sentimentResult.confidence
         },
-        headlines: newsItems.map(item => ({
-          title: item.title,
-          source: item.source,
-          publishedAt: item.publishedAt,
-          url: item.url
-        })),
-        timestamp: new Date().toISOString()
+        headlines: headlinesWithSentiment,
+        meta: {
+          newsCount: newsItems.length
+        },
+        timestamp
       };
     } catch (error) {
       // Re-throw with context

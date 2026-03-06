@@ -4,6 +4,9 @@
  */
 
 const express = require('express');
+const { apiReference } = require('@scalar/express-api-reference');
+const path = require('path');
+const fs = require('fs');
 const errorHandler = require('./infrastructure/middleware/errorHandler');
 
 // Routes
@@ -17,6 +20,25 @@ app.use(express.json());
 
 // Middleware for parsing URL-encoded bodies
 app.use(express.urlencoded({ extended: true }));
+
+// Load OpenAPI spec file
+const openApiPath = path.join(__dirname, '../docs/openapi.yaml');
+const openApiSpec = fs.readFileSync(openApiPath, 'utf8');
+
+// Serve OpenAPI spec file
+app.get('/docs/openapi.yaml', (req, res) => {
+  res.setHeader('Content-Type', 'text/yaml');
+  res.send(openApiSpec);
+});
+
+// API Documentation with Scalar
+app.use(
+  '/docs',
+  apiReference({
+    theme: 'purple',
+    content: openApiSpec,
+  })
+);
 
 // Routes
 app.use('/', indexRoutes);

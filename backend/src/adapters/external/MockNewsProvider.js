@@ -61,6 +61,7 @@ class MockNewsProvider extends NewsProvider {
       const publishedAt = new Date(now.getTime() - hoursAgo * 60 * 60 * 1000);
 
       newsItems.push({
+        id: `${normalizedId}-${i + 1}`,
         title: template.title,
         source: this._getRandomSource(),
         publishedAt: publishedAt.toISOString(),

@@ -1,0 +1,523 @@
+openapi: 3.0.0
+info:
+  title: Crypto Market Insights API
+  description: |
+    REST API for Crypto Market Insights - A portfolio project that combines 
+    crypto market data with sentiment analysis to help interpret market context.
+    
+    This API follows Hexagonal Architecture (Ports & Adapters) principles.
+  version: 1.0.0
+  contact:
+    name: API Support
+  license:
+    name: ISC
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.example.com
+    description: Production server (example)
+
+tags:
+  - name: Status
+    description: API status and health endpoints
+  - name: Crypto
+    description: Cryptocurrency market data and sentiment analysis
+
+paths:
+  /:
+    get:
+      tags:
+        - Status
+      summary: Get API status
+      description: Returns the current status and version information of the API
+      operationId: getStatus
+      responses:
+        '200':
+          description: API is running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+              example:
+                message: Crypto Market Insights API
+                version: 1.0.0
+                status: running
+                timestamp: 2024-01-15T10:30:00.000Z
+
+  /api/crypto/{assetId}/context:
+    get:
+      tags:
+        - Crypto
+      summary: Get crypto market context
+      description: |
+        Retrieves complete market context for a cryptocurrency, including:
+        - Current price and 24h change
+        - Recent news headlines
+        - Sentiment analysis based on news
+        
+        This is the core endpoint that answers: "What's happening with this crypto right now?"
+      operationId: getCryptoMarketContext
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          description: Cryptocurrency identifier (e.g., 'bitcoin', 'ethereum', 'cardano')
+          schema:
+            type: string
+            example: bitcoin
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of news items to retrieve
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+            example: 5
+      responses:
+        '200':
+          description: Market context retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketContextResponse'
+              example:
+                success: true
+                data:
+                  asset:
+                    id: bitcoin
+                    symbol: BTC
+                    name: Bitcoin
+                    price: 43250.50
+                    change24h: 2.45
+                    updatedAt: 2024-01-15T10:30:00.000Z
+                  sentiment:
+                    value: positive
+                    score: 0.65
+                    confidence: 0.8
+                  headlines:
+                    - id: bitcoin-1
+                      title: Bitcoin Reaches New All-Time High Amid Institutional Adoption
+                      source: CryptoNews
+                      publishedAt: 2024-01-15T08:00:00.000Z
+                      url: https://example.com/news/bitcoin-1
+                      sentiment: positive
+                    - id: bitcoin-2
+                      title: Major Bank Announces Bitcoin Trading Services
+                      source: CoinDesk
+                      publishedAt: 2024-01-14T15:30:00.000Z
+                      url: https://example.com/news/bitcoin-2
+                      sentiment: positive
+                  meta:
+                    newsCount: 2
+                  timestamp: 2024-01-15T10:30:00.000Z
+        '400':
+          description: Bad request - Invalid assetId or parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: assetId is required
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Failed to get market context for bitcoin: Price provider failed"
+
+  /api/crypto/{assetId}/news:
+    get:
+      tags:
+        - Crypto
+      summary: Get crypto news headlines
+      description: |
+        Retrieves recent news headlines for a cryptocurrency.
+        
+        Useful for:
+        - Displaying news in the frontend
+        - The system needs news for sentiment analysis
+        - Demonstrates the NewsProvider port
+      operationId: getCryptoNews
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          description: Cryptocurrency identifier (e.g., 'bitcoin', 'ethereum', 'cardano')
+          schema:
+            type: string
+            example: bitcoin
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of news items to retrieve
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+            example: 10
+      responses:
+        '200':
+          description: News retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewsResponse'
+              example:
+                success: true
+                data:
+                  asset: bitcoin
+                  headlines:
+                    - id: bitcoin-1
+                      title: Bitcoin ETF demand grows
+                      source: CoinDesk
+                      publishedAt: 2024-01-15T08:00:00.000Z
+                      url: https://example.com/news/1
+                      sentiment: positive
+                    - id: bitcoin-2
+                      title: Miners accumulate BTC
+                      source: CryptoSlate
+                      publishedAt: 2024-01-14T15:30:00.000Z
+                      url: https://example.com/news/2
+                      sentiment: positive
+                  meta:
+                    newsCount: 2
+                  timestamp: 2024-01-15T10:30:00.000Z
+        '400':
+          description: Bad request - Invalid assetId or parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/crypto/{assetId}/sentiment:
+    get:
+      tags:
+        - Crypto
+      summary: Analyze crypto sentiment
+      description: |
+        Analyzes sentiment for a cryptocurrency based on recent news.
+        
+        This demonstrates:
+        - SentimentAnalyzer domain service (pure domain logic)
+        - NewsProvider port usage
+      operationId: analyzeCryptoSentiment
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          description: Cryptocurrency identifier (e.g., 'bitcoin', 'ethereum', 'cardano')
+          schema:
+            type: string
+            example: bitcoin
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of news items to analyze
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+            example: 20
+      responses:
+        '200':
+          description: Sentiment analysis completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SentimentResponse'
+              example:
+                success: true
+                data:
+                  asset: bitcoin
+                  sentiment:
+                    value: positive
+                    score: 0.62
+                    confidence: 0.78
+                  newsAnalyzed: 20
+                  timestamp: 2024-01-15T10:30:00.000Z
+        '400':
+          description: Bad request - Invalid assetId or parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    StatusResponse:
+      type: object
+      required:
+        - message
+        - version
+        - status
+        - timestamp
+      properties:
+        message:
+          type: string
+          example: Crypto Market Insights API
+        version:
+          type: string
+          example: 1.0.0
+        status:
+          type: string
+          enum: [running, maintenance]
+          example: running
+        timestamp:
+          type: string
+          format: date-time
+          example: 2024-01-15T10:30:00.000Z
+
+    MarketContextResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/MarketContext'
+
+    MarketContext:
+      type: object
+      required:
+        - asset
+        - sentiment
+        - headlines
+        - timestamp
+      properties:
+        asset:
+          $ref: '#/components/schemas/CryptoAsset'
+        sentiment:
+          $ref: '#/components/schemas/Sentiment'
+        headlines:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewsHeadline'
+        timestamp:
+          type: string
+          format: date-time
+          example: 2024-01-15T10:30:00.000Z
+
+    CryptoAsset:
+      type: object
+      required:
+        - id
+        - symbol
+        - name
+        - price
+        - change24h
+        - updatedAt
+      properties:
+        id:
+          type: string
+          description: Cryptocurrency identifier
+          example: bitcoin
+        symbol:
+          type: string
+          description: Cryptocurrency symbol
+          example: BTC
+        name:
+          type: string
+          description: Full name of the cryptocurrency
+          example: Bitcoin
+        price:
+          type: number
+          format: float
+          description: Current price in USD
+          example: 43250.50
+        change24h:
+          type: number
+          format: float
+          description: 24-hour price change percentage
+          example: 2.45
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the price data was retrieved
+          example: 2024-01-15T10:30:00.000Z
+
+    Sentiment:
+      type: object
+      required:
+        - value
+        - score
+        - confidence
+      properties:
+        value:
+          type: string
+          enum: [positive, neutral, negative]
+          description: Overall sentiment classification
+          example: positive
+        score:
+          type: number
+          format: float
+          description: Sentiment score (-1 to 1, where 1 is most positive)
+          example: 0.65
+          minimum: -1
+          maximum: 1
+        confidence:
+          type: number
+          format: float
+          description: Confidence level of the sentiment analysis (0 to 1)
+          example: 0.8
+          minimum: 0
+          maximum: 1
+
+    NewsHeadline:
+      type: object
+      required:
+        - id
+        - title
+        - source
+        - publishedAt
+        - sentiment
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the news item (useful for React keys)
+          example: bitcoin-1
+        title:
+          type: string
+          description: News headline/title
+          example: Bitcoin Reaches New All-Time High
+        source:
+          type: string
+          description: News source name
+          example: CryptoNews
+        publishedAt:
+          type: string
+          format: date-time
+          description: Publication timestamp
+          example: 2024-01-15T08:00:00.000Z
+        url:
+          type: string
+          format: uri
+          description: Link to full article (optional)
+          example: https://example.com/news/bitcoin-1
+        sentiment:
+          type: string
+          enum: [positive, neutral, negative]
+          description: Sentiment classification for this specific news item
+          example: positive
+
+    NewsResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/NewsData'
+
+    NewsData:
+      type: object
+      required:
+        - asset
+        - headlines
+        - meta
+        - timestamp
+      properties:
+        asset:
+          type: string
+          description: Cryptocurrency identifier
+          example: bitcoin
+        headlines:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewsHeadline'
+        meta:
+          $ref: '#/components/schemas/Meta'
+        timestamp:
+          type: string
+          format: date-time
+          example: 2024-01-15T10:30:00.000Z
+
+    SentimentResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/SentimentData'
+
+    SentimentData:
+      type: object
+      required:
+        - asset
+        - sentiment
+        - newsAnalyzed
+        - timestamp
+      properties:
+        asset:
+          type: string
+          description: Cryptocurrency identifier
+          example: bitcoin
+        sentiment:
+          $ref: '#/components/schemas/Sentiment'
+        newsAnalyzed:
+          type: integer
+          description: Number of news items analyzed
+          example: 20
+        timestamp:
+          type: string
+          format: date-time
+          example: 2024-01-15T10:30:00.000Z
+
+    Meta:
+      type: object
+      required:
+        - newsCount
+      properties:
+        newsCount:
+          type: integer
+          description: Number of news items included in the response
+          example: 5
+          minimum: 0
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: Error message
+          example: Failed to get market context for bitcoin
+        stack:
+          type: string
+          description: Stack trace (only in development mode)
+          example: "Error: Failed to get market context..."

@@ -9,10 +9,15 @@
  * 4. Exporting configured use cases
  */
 
+const config = require('./config');
 const MockPriceProvider = require('../adapters/external/MockPriceProvider');
 const MockNewsProvider = require('../adapters/external/MockNewsProvider');
+const CoinGeckoAdapter = require('../adapters/external/CoinGeckoAdapter');
+const CryptoPanicAdapter = require('../adapters/external/CryptoPanicAdapter');
 const SentimentAnalyzer = require('../domain/services/SentimentAnalyzer');
 const GetCryptoMarketContext = require('../application/useCases/GetCryptoMarketContext');
+const GetCryptoNews = require('../application/useCases/GetCryptoNews');
+const AnalyzeCryptoSentiment = require('../application/useCases/AnalyzeCryptoSentiment');
 
 /**
  * Creates and configures the dependency injection container
@@ -20,8 +25,14 @@ const GetCryptoMarketContext = require('../application/useCases/GetCryptoMarketC
  */
 function createContainer() {
   // 1. Instantiate adapters (external dependencies)
-  const priceProvider = new MockPriceProvider();
-  const newsProvider = new MockNewsProvider();
+  // Use real APIs by default, mocks if USE_MOCK_PROVIDERS=true
+  const priceProvider = config.useMockProviders
+    ? new MockPriceProvider()
+    : new CoinGeckoAdapter();
+    
+  const newsProvider = config.useMockProviders
+    ? new MockNewsProvider()
+    : new CryptoPanicAdapter();
 
   // 2. Instantiate domain services
   const sentimentAnalyzer = new SentimentAnalyzer();
@@ -33,9 +44,18 @@ function createContainer() {
     sentimentAnalyzer
   );
 
+  const getCryptoNews = new GetCryptoNews(newsProvider);
+
+  const analyzeCryptoSentiment = new AnalyzeCryptoSentiment(
+    newsProvider,
+    sentimentAnalyzer
+  );
+
   // 4. Export configured use cases
   return {
-    getCryptoMarketContext
+    getCryptoMarketContext,
+    getCryptoNews,
+    analyzeCryptoSentiment
   };
 }
 

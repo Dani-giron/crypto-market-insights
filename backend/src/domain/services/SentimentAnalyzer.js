@@ -23,6 +23,50 @@ const NEGATIVE_KEYWORDS = [
 
 class SentimentAnalyzer {
   /**
+   * Analyzes sentiment for a single news item
+   * @param {Object} newsItem - News item with title/content
+   * @returns {Object} Sentiment analysis result for the item
+   */
+  async analyzeItem(newsItem) {
+    if (!newsItem) {
+      return {
+        sentiment: SentimentScore.neutral(),
+        score: 0,
+        confidence: 0
+      };
+    }
+
+    const text = `${newsItem.title || ''} ${newsItem.content || ''}`.toLowerCase();
+    
+    const positiveMatches = this._countMatches(text, POSITIVE_KEYWORDS);
+    const negativeMatches = this._countMatches(text, NEGATIVE_KEYWORDS);
+
+    let sentiment;
+    let score;
+    let confidence;
+
+    if (positiveMatches > negativeMatches) {
+      sentiment = SentimentScore.positive();
+      score = 0.5 + (positiveMatches / 10); // Scale based on matches
+      confidence = Math.min(1, (positiveMatches - negativeMatches) / 5);
+    } else if (negativeMatches > positiveMatches) {
+      sentiment = SentimentScore.negative();
+      score = -0.5 - (negativeMatches / 10);
+      confidence = Math.min(1, (negativeMatches - positiveMatches) / 5);
+    } else {
+      sentiment = SentimentScore.neutral();
+      score = 0;
+      confidence = 0.5;
+    }
+
+    return {
+      sentiment,
+      score: Math.round(score * 100) / 100,
+      confidence: Math.round(confidence * 100) / 100
+    };
+  }
+
+  /**
    * Analyzes sentiment from news items
    * @param {Array} newsItems - Array of news items with title/content
    * @returns {Object} Sentiment analysis result

@@ -27,16 +27,20 @@ describe('GetCryptoMarketContext', () => {
     mockNewsProvider = {
       getLatest: jest.fn().mockResolvedValue([
         {
+          id: 'bitcoin-1',
           title: 'Bitcoin Reaches New High',
           source: 'CryptoNews',
           publishedAt: new Date().toISOString(),
-          url: 'https://example.com/news/1'
+          url: 'https://example.com/news/1',
+          content: 'Bitcoin reaches new high'
         },
         {
+          id: 'bitcoin-2',
           title: 'Institutional Adoption Grows',
           source: 'CoinDesk',
           publishedAt: new Date().toISOString(),
-          url: 'https://example.com/news/2'
+          url: 'https://example.com/news/2',
+          content: 'Institutional adoption grows'
         }
       ])
     };
@@ -47,6 +51,11 @@ describe('GetCryptoMarketContext', () => {
         sentiment: { toString: () => 'positive' },
         score: 0.65,
         confidence: 0.8
+      }),
+      analyzeItem: jest.fn().mockResolvedValue({
+        sentiment: { toString: () => 'positive' },
+        score: 0.5,
+        confidence: 0.7
       })
     };
 
@@ -69,13 +78,15 @@ describe('GetCryptoMarketContext', () => {
       expect(result).toHaveProperty('timestamp');
 
       // Verify asset data
-      expect(result.asset).toEqual({
+      expect(result.asset).toMatchObject({
         id: 'bitcoin',
         symbol: 'BTC',
         name: 'Bitcoin',
         price: 43250.50,
         change24h: 2.45
       });
+      expect(result.asset).toHaveProperty('updatedAt');
+      expect(typeof result.asset.updatedAt).toBe('string');
 
       // Verify sentiment
       expect(result.sentiment.value).toBe('positive');
@@ -83,8 +94,11 @@ describe('GetCryptoMarketContext', () => {
 
       // Verify headlines
       expect(result.headlines).toHaveLength(2);
+      expect(result.headlines[0]).toHaveProperty('id');
       expect(result.headlines[0]).toHaveProperty('title');
       expect(result.headlines[0]).toHaveProperty('source');
+      expect(result.headlines[0]).toHaveProperty('sentiment');
+      expect(['positive', 'neutral', 'negative']).toContain(result.headlines[0].sentiment);
     });
 
     it('should call all providers with correct parameters', async () => {
@@ -105,6 +119,9 @@ describe('GetCryptoMarketContext', () => {
           expect.objectContaining({ title: expect.any(String) })
         ])
       );
+      
+      // Verify analyzeItem was called for each news item
+      expect(mockSentimentAnalyzer.analyzeItem).toHaveBeenCalledTimes(2);
     });
 
     it('should use default news limit if not provided', async () => {
