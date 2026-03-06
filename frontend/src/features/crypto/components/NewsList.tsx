@@ -11,33 +11,35 @@ interface NewsListProps {
 }
 
 export const NewsList = ({ headlines, isLoading }: NewsListProps) => {
-  const getSentimentColor = (sentiment?: string) => {
-    switch (sentiment) {
-      case 'positive':
-        return 'text-green-400';
-      case 'negative':
-        return 'text-red-400';
-      default:
-        return 'text-yellow-400';
-    }
-  };
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
 
-  const getSentimentIcon = (sentiment?: string) => {
-    switch (sentiment) {
-      case 'positive':
-        return '🟢';
-      case 'negative':
-        return '🔴';
-      default:
-        return '🟡';
+    if (diffHours < 1) {
+      const diffMins = Math.floor(diffMs / (1000 * 60));
+      return `${diffMins}m ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours}h ago`;
+    } else if (diffDays < 7) {
+      return `${diffDays}d ago`;
+    } else {
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      });
     }
   };
 
   if (isLoading) {
     return (
-      <div className="bg-dark-card rounded-lg border border-dark-border p-6">
-        <h3 className="text-lg font-semibold text-dark-text mb-4">Latest News</h3>
-        <div className="space-y-4">
+      <div className="bg-dark-card rounded-lg border border-dark-border p-5">
+        <h3 className="text-sm font-medium text-dark-text-muted uppercase tracking-wide mb-4">
+          Latest News
+        </h3>
+        <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="animate-pulse">
               <div className="h-4 bg-dark-surface rounded w-3/4 mb-2"></div>
@@ -51,54 +53,46 @@ export const NewsList = ({ headlines, isLoading }: NewsListProps) => {
 
   if (headlines.length === 0) {
     return (
-      <div className="bg-dark-card rounded-lg border border-dark-border p-6">
-        <h3 className="text-lg font-semibold text-dark-text mb-4">Latest News</h3>
-        <p className="text-dark-text-muted text-sm">No news available</p>
+      <div className="bg-dark-card rounded-lg border border-dark-border p-5">
+        <h3 className="text-sm font-medium text-dark-text-muted uppercase tracking-wide mb-4">
+          Latest News
+        </h3>
+        <p className="text-sm text-dark-text-muted">No news available</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-dark-card rounded-lg border border-dark-border p-6">
+    <div className="bg-dark-card rounded-lg border border-dark-border p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-dark-text">Latest News</h3>
+        <h3 className="text-sm font-medium text-dark-text-muted uppercase tracking-wide">
+          Latest News
+        </h3>
         <span className="text-xs text-dark-text-muted">
           {headlines.length} {headlines.length === 1 ? 'article' : 'articles'}
         </span>
       </div>
       
-      <div className="space-y-4">
-        {headlines.map((headline) => (
+      <div className="divide-y divide-dark-border">
+        {headlines.map((headline, index) => (
           <a
             key={headline.id}
             href={headline.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="block p-4 rounded-lg border border-dark-border hover:border-dark-text-muted transition-colors group"
+            className="block py-3 first:pt-0 last:pb-0 hover:opacity-80 transition-opacity group"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1">
-                <h4 className="text-sm font-medium text-dark-text group-hover:text-white transition-colors mb-2">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-medium text-dark-text group-hover:text-primary-accent transition-colors mb-1.5 line-clamp-2">
                   {headline.title}
                 </h4>
-                <div className="flex items-center gap-3 text-xs text-dark-text-muted">
+                <div className="flex items-center gap-2 text-xs text-dark-text-muted">
                   <span>{headline.source}</span>
-                  <span>•</span>
-                  <span>
-                    {new Date(headline.publishedAt).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </span>
+                  <span>·</span>
+                  <span>{formatTime(headline.publishedAt)}</span>
                 </div>
               </div>
-              {headline.sentiment && (
-                <div className={`flex items-center gap-1 ${getSentimentColor(headline.sentiment)}`}>
-                  <span className="text-sm">{getSentimentIcon(headline.sentiment)}</span>
-                </div>
-              )}
             </div>
           </a>
         ))}

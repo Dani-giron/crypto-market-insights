@@ -8,13 +8,19 @@ export default {
     extend: {
       colors: {
         dark: {
-          bg: '#0a0e27',
-          surface: '#131829',
-          card: '#1a1f3a',
-          border: '#252b45',
-          text: '#e2e8f0',
-          'text-muted': '#94a3b8',
+          bg: '#0B0F19',
+          surface: '#111827',
+          card: '#111827',
+          border: '#1F2937',
+          text: '#E5E7EB',
+          'text-muted': '#9CA3AF',
         },
+        primary: {
+          accent: '#3B82F6',
+        },
+      },
+      spacing: {
+        '18': '4.5rem',
       },
     },
   },

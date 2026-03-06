@@ -14,12 +14,12 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     <div className="min-h-screen bg-dark-bg">
       {/* Header */}
       <header className="border-b border-dark-border bg-dark-surface">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gradient">Crypto Market Insights</h1>
-              <p className="text-sm text-dark-text-muted mt-1">
-                Real-time cryptocurrency analytics and sentiment analysis
+              <h1 className="text-xl font-semibold text-dark-text">Crypto Market Insights</h1>
+              <p className="text-xs text-dark-text-muted mt-0.5 uppercase tracking-wide">
+                Market Analytics
               </p>
             </div>
           </div>
@@ -27,7 +27,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-6 py-6">
         {children}
       </main>
     </div>

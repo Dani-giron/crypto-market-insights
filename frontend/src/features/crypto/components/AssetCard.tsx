@@ -11,33 +11,32 @@ interface AssetCardProps {
 
 export const AssetCard = ({ asset }: AssetCardProps) => {
   const isPositive = asset.change24h >= 0;
-  const changeColor = isPositive ? 'text-green-400' : 'text-red-400';
-  const changeIcon = isPositive ? '↑' : '↓';
+  const changeColor = isPositive ? 'text-dark-text' : 'text-dark-text';
 
   return (
-    <div className="bg-dark-card rounded-lg border border-dark-border p-6">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-dark-card rounded-lg border border-dark-border p-5">
+      <div className="space-y-3">
+        {/* Asset Name and Symbol */}
         <div>
-          <h2 className="text-2xl font-bold text-dark-text">{asset.name}</h2>
-          <p className="text-dark-text-muted text-sm mt-1">{asset.symbol}</p>
+          <h2 className="text-lg font-semibold text-dark-text">{asset.name}</h2>
+          <p className="text-xs text-dark-text-muted uppercase tracking-wide mt-0.5">{asset.symbol}</p>
         </div>
-        <div className="text-right">
-          <p className="text-3xl font-bold text-dark-text">
+
+        {/* Price */}
+        <div>
+          <p className="text-2xl font-semibold text-dark-text">
             ${asset.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
-          <div className={`flex items-center gap-1 mt-1 ${changeColor}`}>
-            <span className="text-sm font-semibold">
-              {changeIcon} {Math.abs(asset.change24h).toFixed(2)}%
-            </span>
-            <span className="text-xs text-dark-text-muted">24h</span>
-          </div>
+        </div>
+
+        {/* 24h Change */}
+        <div className="flex items-baseline gap-2 pt-2 border-t border-dark-border">
+          <span className={`text-sm font-medium ${changeColor}`}>
+            {isPositive ? '+' : ''}{asset.change24h.toFixed(2)}%
+          </span>
+          <span className="text-xs text-dark-text-muted uppercase tracking-wide">24h</span>
         </div>
       </div>
-      {asset.updatedAt && (
-        <p className="text-xs text-dark-text-muted mt-4">
-          Updated: {new Date(asset.updatedAt).toLocaleString()}
-        </p>
-      )}
     </div>
   );
 };
