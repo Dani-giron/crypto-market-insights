@@ -12,5 +12,7 @@ module.exports = {
   cryptopanicApiKey: process.env.CRYPTOPANIC_API_KEY || null,
   // Feature flags
   useMockProviders: process.env.USE_MOCK_PROVIDERS === 'true' || false,
+  useMockPriceProvider: process.env.USE_MOCK_PRICE_PROVIDER === 'true' || false,
+  useMockNewsProvider: process.env.USE_MOCK_NEWS_PROVIDER === 'true' || false,
   // Add more configuration as needed
 };

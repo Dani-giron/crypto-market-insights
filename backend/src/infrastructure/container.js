@@ -25,12 +25,12 @@ const AnalyzeCryptoSentiment = require('../application/useCases/AnalyzeCryptoSen
  */
 function createContainer() {
   // 1. Instantiate adapters (external dependencies)
-  // Use real APIs by default, mocks if USE_MOCK_PROVIDERS=true
-  const priceProvider = config.useMockProviders
+  // Use real APIs by default, mocks if USE_MOCK_PROVIDERS=true or specific flags
+  const priceProvider = (config.useMockProviders || config.useMockPriceProvider)
     ? new MockPriceProvider()
     : new CoinGeckoAdapter();
     
-  const newsProvider = config.useMockProviders
+  const newsProvider = (config.useMockProviders || config.useMockNewsProvider)
     ? new MockNewsProvider()
     : new CryptoPanicAdapter();
 

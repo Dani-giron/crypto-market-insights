@@ -13,7 +13,8 @@ const config = require('../../infrastructure/config');
 class CryptoPanicAdapter extends NewsProvider {
   constructor() {
     super();
-    this.baseURL = 'https://cryptopanic.com/api/v1';
+    // CryptoPanic API v2 - Developer endpoint
+    this.baseURL = 'https://cryptopanic.com/api/developer/v2';
     // Load API key from config (which loads from .env)
     this.apiKey = config.cryptopanicApiKey || process.env.CRYPTOPANIC_API_KEY || null;
     this.timeout = 5000; // 5 seconds timeout
@@ -40,20 +41,20 @@ class CryptoPanicAdapter extends NewsProvider {
       // CryptoPanic uses currency codes (BTC, ETH, etc.)
       const currencyCode = this._getCurrencyCode(assetId);
       
-      // According to CryptoPanic API docs:
-      // Format: https://cryptopanic.com/api/v1/posts/?auth_token=YOUR_KEY&currencies=BTC&kind=news
+      // According to CryptoPanic API v2 docs:
+      // Format: https://cryptopanic.com/api/developer/v2/posts/?auth_token=YOUR_KEY&currencies=BTC&public=true&kind=news
       const params = new URLSearchParams({
         auth_token: this.apiKey,
         currencies: currencyCode,
-        kind: 'news', // Required parameter according to docs
-        page: '1'
+        public: 'true', // Public mode for generic apps
+        kind: 'news' // Filter by news only
       });
       
       const url = `${this.baseURL}/posts/?${params.toString()}`;
 
       // Debug log in development
       if (process.env.NODE_ENV !== 'production') {
-        console.log(`🔍 CryptoPanic API request: ${this.baseURL}/posts/?auth_token=***&currencies=${currencyCode}&kind=news&page=1`);
+        console.log(`🔍 CryptoPanic API v2 request: ${this.baseURL}/posts/?auth_token=***&currencies=${currencyCode}&public=true&kind=news`);
         console.log(`   Full URL (masked): ${url.replace(this.apiKey, '***')}`);
       }
 
@@ -81,16 +82,16 @@ class CryptoPanicAdapter extends NewsProvider {
 
       const results = response.data.results || [];
       
-      // Map CryptoPanic response to our domain format
+      // Map CryptoPanic API v2 response to our domain format
       return results
         .slice(0, limit)
         .map((item, index) => ({
-          id: `${assetId}-${index + 1}`,
+          id: item.id ? `cryptopanic-${item.id}` : `${assetId}-${index + 1}`,
           title: item.title || 'Untitled',
           source: item.source?.title || 'CryptoPanic',
-          publishedAt: item.published_at || new Date().toISOString(),
-          url: item.url || `https://cryptopanic.com/news/${item.id}/`,
-          content: item.title || '' // CryptoPanic doesn't provide full content in free tier
+          publishedAt: item.published_at || item.created_at || new Date().toISOString(),
+          url: item.original_url || item.url || `https://cryptopanic.com/news/${item.slug || item.id}/`,
+          content: item.description || item.title || '' // Use description if available
         }));
     } catch (error) {
       if (error.response) {
