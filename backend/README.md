@@ -2,6 +2,8 @@
 
 Backend API para el proyecto portfolio "Crypto Market Insights".
 
+For a complete overview of the system architecture, see [ARCHITECTURE.md](../ARCHITECTURE.md) in the root directory.
+
 ## Arquitectura
 
 Este proyecto utiliza **Hexagonal Architecture** (también conocida como Ports & Adapters), una arquitectura limpia que separa la lógica de negocio de los detalles de implementación.
@@ -65,13 +67,17 @@ Este proyecto utiliza **Hexagonal Architecture** (también conocida como Ports &
 - Permite intercambiar implementaciones fácilmente
 
 #### 4. Adapters (Implementaciones)
-- **External Adapters**: `MockPriceProvider`, `MockNewsProvider`
+- **External Adapters**: 
+  - `CoinGeckoAdapter` - Implementación real para precios (CoinGecko API)
+  - `CryptoPanicAdapter` - Implementación real para noticias (CryptoPanic API)
+  - `MockPriceProvider`, `MockNewsProvider` - Implementaciones mock para desarrollo/testing
 - **HTTP Adapters**: Controllers y Routes de Express
 
 **Características:**
 - Implementan los ports definidos
 - Aíslan detalles técnicos (HTTP, APIs externas)
 - Fáciles de reemplazar o mockear
+- Configurables mediante variables de entorno
 
 #### 5. Infrastructure Layer
 - Configuración, middleware, container de dependencias
@@ -129,6 +135,38 @@ backend/
 npm install
 ```
 
+## Configuración
+
+Crea un archivo `.env` en la raíz del proyecto `backend/`:
+
+```env
+PORT=3000
+NODE_ENV=development
+
+# Opcional: API Keys para mayor rate limit
+CRYPTOPANIC_API_KEY=tu_api_key_aqui
+
+# Opcional: Usar providers mock en lugar de APIs reales
+USE_MOCK_PROVIDERS=false
+```
+
+### APIs Externas
+
+El sistema utiliza APIs reales por defecto:
+
+- **CoinGecko**: Para precios de criptomonedas
+  - URL: https://www.coingecko.com/en/api/documentation
+  - Sin API key requerida (rate limit: ~10-50 calls/minuto)
+  - Endpoint usado: `/simple/price`
+  
+- **CryptoPanic**: Para noticias de criptomonedas
+  - URL: https://cryptopanic.com/developers/api/
+  - API key opcional (aumenta rate limits)
+  - Obtener API key gratuita: https://cryptopanic.com/developers/api/
+  - Endpoint usado: `/posts/`
+
+**Nota**: Para desarrollo/testing, puedes usar `USE_MOCK_PROVIDERS=true` para usar datos mock sin hacer llamadas a APIs externas.
+
 ## Ejecución
 
 ```bash
@@ -140,6 +178,14 @@ npm start
 ```
 
 El servidor se ejecutará en el puerto 3000 por defecto (o el puerto especificado en la variable de entorno `PORT`).
+
+## API Documentation
+
+La documentación interactiva de la API está disponible en:
+
+**http://localhost:3000/docs**
+
+Esta documentación está generada con [Scalar](https://scalar.com/) y utiliza el archivo OpenAPI 3.0 ubicado en `docs/openapi.yaml`.
 
 ## Endpoints
 
@@ -209,12 +255,11 @@ GET /api/crypto/bitcoin/context?limit=5
 - ✅ Manejo de errores centralizado
 
 ### Pendiente
-- [ ] Adapters reales para APIs externas (CoinGecko, NewsAPI)
-- [ ] Tests unitarios de use cases
-- [ ] Tests de integración
+- [ ] Tests de integración con APIs reales
 - [ ] Validación de datos de entrada
 - [ ] Rate limiting
 - [ ] Caching layer
+- [ ] Retry logic para APIs externas
 - [ ] Logging estructurado
 
 ## Desarrollo
