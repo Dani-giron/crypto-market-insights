@@ -103,6 +103,25 @@ The system uses a hexagonal architecture pattern for the backend and a feature-b
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
 
+### Architecture Diagrams
+
+The project includes several architectural views following the C4 model and additional design diagrams:
+
+**System Views:**
+- [System Context](docs/architecture/system-context.md) - High-level view of the system and its external dependencies
+- [Containers](docs/architecture/containers.md) - Main applications and their separation (React SPA, Node.js API)
+
+**Component Views:**
+- [Module Structure](docs/architecture/modules.md) - Backend hexagonal architecture layers
+- [Component-Connector](docs/architecture/component-connector.md) - How components connect and communicate
+- [Class Diagram](docs/architecture/class-diagram.md) - Domain entities, services, ports, and adapters relationships
+
+**Behavioral Views:**
+- [Data Flow](docs/architecture/data-flow.md) - End-to-end request flow from frontend to external APIs
+- [Use Case Flow](docs/architecture/use-case-flow.md) - Detailed internal flow of the GetCryptoMarketContext use case
+
+Each diagram focuses on specific aspects and omits implementation details for clarity. See each diagram's "What's Omitted" section for details.
+
 ## Project Structure
 
 ```

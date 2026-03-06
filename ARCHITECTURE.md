@@ -64,6 +64,8 @@ The frontend modules are organized by features. Each feature contains everything
 
 See [Module Structure Diagram](docs/architecture/modules.md) for a visual breakdown.
 
+For a detailed view of how components connect, see the [Component-Connector View](docs/architecture/component-connector.md). For class relationships and dependencies, see the [Class Diagram](docs/architecture/class-diagram.md).
+
 ## Request Flow
 
 When a user views the dashboard:
@@ -80,7 +82,9 @@ When a user views the dashboard:
 7. The controller formats the response as JSON
 8. React Query caches the response and updates the UI
 
-See [Data Flow Diagram](docs/architecture/data-flow.md) for a detailed view.
+See [Data Flow Diagram](docs/architecture/data-flow.md) for a detailed view of the end-to-end flow.
+
+For a more detailed view of the internal logic within a use case, see the [Use Case Flow Diagram](docs/architecture/use-case-flow.md) which shows the step-by-step process of `GetCryptoMarketContext`.
 
 ## Design Decisions
 
