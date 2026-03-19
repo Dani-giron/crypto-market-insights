@@ -13,7 +13,7 @@ const config = require('./config');
 const MockPriceProvider = require('../adapters/external/MockPriceProvider');
 const MockNewsProvider = require('../adapters/external/MockNewsProvider');
 const CoinGeckoAdapter = require('../adapters/external/CoinGeckoAdapter');
-const CryptoPanicAdapter = require('../adapters/external/CryptoPanicAdapter');
+const RSSNewsAdapter = require('../adapters/external/RSSNewsAdapter');
 const SentimentAnalyzer = require('../domain/services/SentimentAnalyzer');
 const GetCryptoMarketContext = require('../application/useCases/GetCryptoMarketContext');
 const GetCryptoNews = require('../application/useCases/GetCryptoNews');
@@ -32,7 +32,7 @@ function createContainer() {
     
   const newsProvider = (config.useMockProviders || config.useMockNewsProvider)
     ? new MockNewsProvider()
-    : new CryptoPanicAdapter();
+    : new RSSNewsAdapter();
 
   // 2. Instantiate domain services
   const sentimentAnalyzer = new SentimentAnalyzer();
