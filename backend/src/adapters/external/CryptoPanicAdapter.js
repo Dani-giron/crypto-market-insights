@@ -54,8 +54,7 @@ class CryptoPanicAdapter extends NewsProvider {
 
       // Debug log in development
       if (process.env.NODE_ENV !== 'production') {
-        console.log(`🔍 CryptoPanic API v2 request: ${this.baseURL}/posts/?auth_token=***&currencies=${currencyCode}&public=true&kind=news`);
-        console.log(`   Full URL (masked): ${url.replace(this.apiKey, '***')}`);
+        console.log(`🔍 CryptoPanic request: currencies=${currencyCode}, limit=${limit}`);
       }
 
       const response = await axios.get(url, {
@@ -80,6 +79,11 @@ class CryptoPanicAdapter extends NewsProvider {
         throw new Error(`CryptoPanic API returned unexpected response format: ${typeof response.data}`);
       }
 
+      // Check for API-level errors (CryptoPanic returns 200 with error body)
+      if (response.data.status === 'api_error') {
+        throw new Error(`CryptoPanic API error: ${response.data.info || 'Unknown error'}. Please check your API key.`);
+      }
+
       const results = response.data.results || [];
       
       // Map CryptoPanic API v2 response to our domain format
@@ -91,7 +95,14 @@ class CryptoPanicAdapter extends NewsProvider {
           source: item.source?.title || 'CryptoPanic',
           publishedAt: item.published_at || item.created_at || new Date().toISOString(),
           url: item.original_url || item.url || `https://cryptopanic.com/news/${item.slug || item.id}/`,
-          content: item.description || item.title || '' // Use description if available
+          content: item.description || item.title || '',
+          votes: item.votes ? {
+            positive: item.votes.positive || 0,
+            negative: item.votes.negative || 0,
+            important: item.votes.important || 0,
+            liked: item.votes.liked || 0,
+            disliked: item.votes.disliked || 0,
+          } : null
         }));
     } catch (error) {
       if (error.response) {
