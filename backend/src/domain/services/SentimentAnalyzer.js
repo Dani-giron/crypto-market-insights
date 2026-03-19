@@ -36,8 +36,14 @@ class SentimentAnalyzer {
       };
     }
 
+    // Use community votes when available (more reliable than keywords)
+    if (newsItem.votes && this._hasVoteSignal(newsItem.votes)) {
+      return this._analyzeByVotes(newsItem.votes);
+    }
+
+    // Fallback: keyword-based analysis
     const text = `${newsItem.title || ''} ${newsItem.content || ''}`.toLowerCase();
-    
+
     const positiveMatches = this._countMatches(text, POSITIVE_KEYWORDS);
     const negativeMatches = this._countMatches(text, NEGATIVE_KEYWORDS);
 
@@ -47,7 +53,7 @@ class SentimentAnalyzer {
 
     if (positiveMatches > negativeMatches) {
       sentiment = SentimentScore.positive();
-      score = 0.5 + (positiveMatches / 10); // Scale based on matches
+      score = 0.5 + (positiveMatches / 10);
       confidence = Math.min(1, (positiveMatches - negativeMatches) / 5);
     } else if (negativeMatches > positiveMatches) {
       sentiment = SentimentScore.negative();
@@ -86,14 +92,10 @@ class SentimentAnalyzer {
 
     // Analyze each news item
     for (const item of newsItems) {
-      const text = `${item.title || ''} ${item.content || ''}`.toLowerCase();
-      
-      const positiveMatches = this._countMatches(text, POSITIVE_KEYWORDS);
-      const negativeMatches = this._countMatches(text, NEGATIVE_KEYWORDS);
-
-      if (positiveMatches > negativeMatches) {
+      const result = await this.analyzeItem(item);
+      if (result.sentiment.isPositive()) {
         positiveCount++;
-      } else if (negativeMatches > positiveMatches) {
+      } else if (result.sentiment.isNegative()) {
         negativeCount++;
       } else {
         neutralCount++;
@@ -131,11 +133,55 @@ class SentimentAnalyzer {
   }
 
   /**
+   * Checks if votes object has enough signal to use
+   * @private
+   */
+  _hasVoteSignal(votes) {
+    const total = (votes.positive || 0) + (votes.negative || 0) + (votes.liked || 0) + (votes.disliked || 0);
+    return total >= 3; // Minimum votes to consider reliable
+  }
+
+  /**
+   * Analyzes sentiment from community votes
+   * @private
+   */
+  _analyzeByVotes(votes) {
+    const positiveSignal = (votes.positive || 0) + (votes.liked || 0);
+    const negativeSignal = (votes.negative || 0) + (votes.disliked || 0);
+    const total = positiveSignal + negativeSignal;
+
+    if (total === 0) {
+      return { sentiment: SentimentScore.neutral(), score: 0, confidence: 0.5 };
+    }
+
+    const positiveRatio = positiveSignal / total;
+    const negativeRatio = negativeSignal / total;
+    const confidence = Math.min(1, total / 20); // More votes = higher confidence, max at 20 votes
+
+    if (positiveRatio > 0.55) {
+      return {
+        sentiment: SentimentScore.positive(),
+        score: Math.round(positiveRatio * 100) / 100,
+        confidence: Math.round(confidence * 100) / 100
+      };
+    } else if (negativeRatio > 0.55) {
+      return {
+        sentiment: SentimentScore.negative(),
+        score: Math.round(-negativeRatio * 100) / 100,
+        confidence: Math.round(confidence * 100) / 100
+      };
+    } else {
+      return {
+        sentiment: SentimentScore.neutral(),
+        score: Math.round((positiveRatio - negativeRatio) * 100) / 100,
+        confidence: Math.round(confidence * 0.7 * 100) / 100 // Lower confidence for ambiguous
+      };
+    }
+  }
+
+  /**
    * Counts keyword matches in text
    * @private
-   * @param {string} text - Text to search
-   * @param {Array<string>} keywords - Keywords to match
-   * @returns {number} Number of matches
    */
   _countMatches(text, keywords) {
     return keywords.reduce((count, keyword) => {
