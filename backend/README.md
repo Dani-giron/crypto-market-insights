@@ -67,9 +67,9 @@ Este proyecto utiliza **Hexagonal Architecture** (también conocida como Ports &
 - Permite intercambiar implementaciones fácilmente
 
 #### 4. Adapters (Implementaciones)
-- **External Adapters**: 
+- **External Adapters**:
   - `CoinGeckoAdapter` - Implementación real para precios (CoinGecko API)
-  - `CryptoPanicAdapter` - Implementación real para noticias (CryptoPanic API)
+  - `RSSNewsAdapter` - Implementación real para noticias vía RSS feeds (CoinDesk, CoinTelegraph, Decrypt, Bitcoin Magazine)
   - `MockPriceProvider`, `MockNewsProvider` - Implementaciones mock para desarrollo/testing
 - **HTTP Adapters**: Controllers y Routes de Express
 
@@ -143,29 +143,31 @@ Crea un archivo `.env` en la raíz del proyecto `backend/`:
 PORT=3000
 NODE_ENV=development
 
-# Opcional: API Keys para mayor rate limit
-CRYPTOPANIC_API_KEY=tu_api_key_aqui
-
-# Opcional: Usar providers mock en lugar de APIs reales
+# Opcional: Usar providers mock en lugar de APIs/feeds reales
 USE_MOCK_PROVIDERS=false
 ```
 
-### APIs Externas
+No se requiere ninguna API key. El sistema obtiene noticias de feeds RSS públicos.
 
-El sistema utiliza APIs reales por defecto:
+### Fuentes de Datos
 
-- **CoinGecko**: Para precios de criptomonedas
-  - URL: https://www.coingecko.com/en/api/documentation
-  - Sin API key requerida (rate limit: ~10-50 calls/minuto)
-  - Endpoint usado: `/simple/price`
-  
-- **CryptoPanic**: Para noticias de criptomonedas
-  - URL: https://cryptopanic.com/developers/api/
-  - API key opcional (aumenta rate limits)
-  - Obtener API key gratuita: https://cryptopanic.com/developers/api/
-  - Endpoint usado: `/posts/`
+- **CoinGecko** — Precios en tiempo real
+  - Sin API key requerida
+  - Endpoint: `/api/v3/simple/price`
+  - Rate limit: ~10-50 calls/minuto en el free tier
 
-**Nota**: Para desarrollo/testing, puedes usar `USE_MOCK_PROVIDERS=true` para usar datos mock sin hacer llamadas a APIs externas.
+- **RSS Feeds** — Noticias de criptomonedas (sin API key, sin rate limit)
+  | Fuente | Feed |
+  |--------|------|
+  | CoinDesk | `coindesk.com/arc/outboundfeeds/rss/` |
+  | CoinTelegraph | `cointelegraph.com/rss` |
+  | Decrypt | `decrypt.co/feed` |
+  | Bitcoin Magazine | `bitcoinmagazine.com/feed` |
+
+  Los feeds se consultan en paralelo. Si uno falla, los demás siguen funcionando.
+  Las noticias se filtran por keywords del activo (ej: `bitcoin`, `btc`).
+
+**Nota**: Para desarrollo/testing, puedes usar `USE_MOCK_PROVIDERS=true` para usar datos mock sin hacer llamadas a fuentes externas.
 
 ## Ejecución
 
@@ -253,13 +255,15 @@ GET /api/crypto/bitcoin/context?limit=5
 - ✅ Mock adapters para desarrollo
 - ✅ Endpoint de contexto de mercado
 - ✅ Manejo de errores centralizado
+- ✅ Noticias vía RSS feeds (sin API key)
+- ✅ Sentiment analysis con votos de comunidad + keywords como fallback
 
 ### Pendiente
-- [ ] Tests de integración con APIs reales
+- [ ] Tests de integración
 - [ ] Validación de datos de entrada
 - [ ] Rate limiting
-- [ ] Caching layer
-- [ ] Retry logic para APIs externas
+- [ ] Caching layer (especialmente para RSS feeds)
+- [ ] Retry logic para feeds externos
 - [ ] Logging estructurado
 
 ## Desarrollo

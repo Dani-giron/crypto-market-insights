@@ -8,7 +8,7 @@ Crypto Market Insights is a full-stack web application that combines real-time c
 
 ## System Context
 
-At the highest level, the system interacts with users who want to understand market context for cryptocurrencies. It fetches price data from CoinGecko and news from CryptoPanic, then analyzes sentiment to provide a complete market view.
+At the highest level, the system interacts with users who want to understand market context for cryptocurrencies. It fetches price data from CoinGecko and news from public RSS feeds (CoinDesk, CoinTelegraph, Decrypt, Bitcoin Magazine), then analyzes sentiment to provide a complete market view.
 
 See [System Context Diagram](docs/architecture/system-context.md) for a visual representation.
 
@@ -18,7 +18,7 @@ The system consists of three main parts:
 
 1. **React SPA** - The frontend dashboard that users interact with
 2. **Node.js API** - The backend server that handles requests and coordinates data fetching
-3. **External APIs** - CoinGecko for prices and CryptoPanic for news
+3. **External Sources** - CoinGecko for prices and RSS feeds for news (no API keys required)
 
 The frontend communicates with the backend via REST API, and the backend fetches data from external services.
 
@@ -36,7 +36,7 @@ The architecture has these layers:
 
 - **Ports** - Interfaces that define what the system needs from the outside world, like `CryptoPriceProvider` and `NewsProvider`. These are contracts, not implementations.
 
-- **Adapters** - Implementations of the ports. `CoinGeckoAdapter` implements `CryptoPriceProvider`, and `CryptoPanicAdapter` implements `NewsProvider`. There are also mock adapters for development and testing.
+- **Adapters** - Implementations of the ports. `CoinGeckoAdapter` implements `CryptoPriceProvider`, and `RSSNewsAdapter` implements `NewsProvider` by aggregating public RSS feeds from CoinDesk, CoinTelegraph, Decrypt, and Bitcoin Magazine. There are also mock adapters for development and testing.
 
 - **Infrastructure** - Configuration, dependency injection container, and middleware. The container wires everything together.
 
@@ -76,7 +76,7 @@ When a user views the dashboard:
 4. The controller extracts parameters and calls the use case
 5. The use case (`GetCryptoMarketContext`) coordinates:
    - Fetching price from `CoinGeckoAdapter`
-   - Fetching news from `CryptoPanicAdapter`
+   - Fetching news from `RSSNewsAdapter` (aggregates CoinDesk, CoinTelegraph, Decrypt, Bitcoin Magazine in parallel)
    - Analyzing sentiment using `SentimentAnalyzer`
 6. The use case combines everything and returns the result
 7. The controller formats the response as JSON
@@ -92,4 +92,4 @@ The main architectural decision was using hexagonal architecture for the backend
 
 For the frontend, React Query was chosen over alternatives like Redux because it handles server state, caching, and refetching out of the box, which fits well with this API-driven application.
 
-The sentiment analysis uses a simple keyword-based approach rather than machine learning models. This is a pragmatic choice for an MVP that can be improved later if needed.
+The sentiment analysis uses a two-tier approach: when a news item has community votes (from CryptoPanic-sourced data), those votes are used as the primary signal since they reflect real user reactions. When votes are absent or insufficient (fewer than 3 votes), the analyzer falls back to keyword matching. This is a pragmatic choice that leverages available signals without requiring ML models.

@@ -15,8 +15,8 @@ The dashboard displays:
 ## Features
 
 - Real-time price data from CoinGecko API
-- News aggregation from CryptoPanic
-- Sentiment analysis using keyword-based classification
+- News aggregation from RSS feeds (CoinDesk, CoinTelegraph, Decrypt, Bitcoin Magazine) — no API key required
+- Sentiment analysis combining community votes and keyword classification
 - Auto-refreshing dashboard (updates every minute)
 - Dark theme UI inspired by modern crypto analytics platforms
 
@@ -69,9 +69,10 @@ Create a `.env` file in the `backend/` directory:
 ```env
 PORT=3000
 NODE_ENV=development
-CRYPTOPANIC_API_KEY=your_api_key_here  # Optional
-USE_MOCK_PROVIDERS=false  # Set to true for mock data
+USE_MOCK_PROVIDERS=false  # Set to true to use mock data instead of live feeds
 ```
+
+No API keys required — news is fetched from public RSS feeds.
 
 **Frontend:**
 Create a `.env` file in the `frontend/` directory:
